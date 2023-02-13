@@ -28,9 +28,9 @@ def ocr_space_file(filename, overlay=False, api_key='e61f4d4c3488957', language=
                           )
     return r.content.decode()
     
-def ocr_result(image_path):
+# not used anymore, this is the Microsoft OCR API call function
+def ocr_result_old(image_path):
     cv_subscription_key = "xxx"
-    region = 'germanywestcentral'
     cv_endpoint = "https://chartocr-cv.cognitiveservices.azure.com/vision/v2.1/"
 
     ocr_url = cv_endpoint + "recognizeText?mode=Printed"
@@ -76,11 +76,33 @@ def ocr_result(image_path):
                 word_infos.append(word_info)
     return word_infos
 
+# new function works without Microsoft OCR API and uses Pytesseract instead
+def ocr_result(image_path):
+    image = Image.open(image_path)
+    enh_con = ImageEnhance.Contrast(image)
+    contrast = 2.0
+    image = enh_con.enhance(contrast)
+    image = image.convert('L')
+    image = image.resize((800, 800))
+    image.save('OCR_temp.png')
+    # image_data = open('OCR_temp.png', "rb").read()
 
-# not sure what this is, I guess just a test
-image_path = 'C:\\work\\evalset_fqa\\vbar\\bitmap\\'
-image_names = os.listdir(image_path)
-for name in ['495.jpg', '151.jpg']:
-    image_file_path = os.path.join(image_path, name)
-    result = ocr_result(image_file_path)
-    print(result)
+    df_bb = pytesseract.image_to_data(image, output_type='data.frame')
+    df_bb = df_bb[df_bb['conf'] != -1]
+    df_bb = df_bb.drop(columns=['level', 'page_num', 'block_num', 'par_num', 'line_num', 'word_num'])
+    # now we have a dataframe with the bounding box coordinates and the text
+    # we need to convert this to a dictionary, with 'boundingBox' and 'text' as keys
+    # the bounding box coordinates should be topleft_x, topleft_y, topright_x, topright_y, bottomright_x, bottomright_y, bottomleft_x, bottomleft_y
+    # the text should be the text in the bounding box
+    # build numerical array of bounding box coordinates
+    df_bb['left'] = df_bb['left'].astype(int)
+    df_bb['top'] = df_bb['top'].astype(int)
+    df_bb['width'] = df_bb['width'].astype(int)
+    df_bb['height'] = df_bb['height'].astype(int)
+    df_bb['conf'] = df_bb['conf'].astype(int)
+    # build bounding box coordinates array
+    df_bb['boundingBox'] = df_bb.apply(lambda row: [row['left'], row['top'], row['left'] + row['width'], row['top'], row['left'] + row['width'], row['top'] + row['height'], row['left'], row['top'] + row['height']], axis=1)
+    df_bb = df_bb.drop(columns=['left', 'top', 'width', 'height', 'conf'])
+    df_bb = df_bb[['boundingBox', 'text']]
+    df_bb = df_bb.to_dict('records')
+    return df_bb

@@ -24,6 +24,9 @@ torch.backends.cudnn.benchmark = False
 import requests
 import time
 import re
+import pytesseract
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Test CornerNet")
     parser.add_argument("--cfg_file", dest="cfg_file", help="config file", default="CornerNetLine", type=str)
@@ -119,9 +122,8 @@ def Pre_load_nets():
     return methods
 methods = Pre_load_nets()
 
-def ocr_result(image_path):
-    cv_subscription_key = "f9bb97b9530e48c19905b922e9c5f3f8"
-    region = 'germanywestcentral'
+def ocr_result_old(image_path):
+    cv_subscription_key = "xxx"
     cv_endpoint = "https://chartocr-cv.cognitiveservices.azure.com/vision/v2.1/"
 
     ocr_url = cv_endpoint + "recognizeText?mode=Printed"
@@ -166,6 +168,36 @@ def ocr_result(image_path):
                     continue
                 word_infos.append(word_info)
     return word_infos
+
+def ocr_result(image_path):
+    image = Image.open(image_path)
+    enh_con = ImageEnhance.Contrast(image)
+    contrast = 2.0
+    image = enh_con.enhance(contrast)
+    image = image.convert('L')
+    image = image.resize((800, 800))
+    image.save('OCR_temp.png')
+    # image_data = open('OCR_temp.png', "rb").read()
+
+    df_bb = pytesseract.image_to_data(image, output_type='data.frame')
+    df_bb = df_bb[df_bb['conf'] != -1]
+    df_bb = df_bb.drop(columns=['level', 'page_num', 'block_num', 'par_num', 'line_num', 'word_num'])
+    # now we have a dataframe with the bounding box coordinates and the text
+    # we need to convert this to a dictionary, with 'boundingBox' and 'text' as keys
+    # the bounding box coordinates should be topleft_x, topleft_y, topright_x, topright_y, bottomright_x, bottomright_y, bottomleft_x, bottomleft_y
+    # the text should be the text in the bounding box
+    # build numerical array of bounding box coordinates
+    df_bb['left'] = df_bb['left'].astype(int)
+    df_bb['top'] = df_bb['top'].astype(int)
+    df_bb['width'] = df_bb['width'].astype(int)
+    df_bb['height'] = df_bb['height'].astype(int)
+    df_bb['conf'] = df_bb['conf'].astype(int)
+    # build bounding box coordinates array
+    df_bb['boundingBox'] = df_bb.apply(lambda row: [row['left'], row['top'], row['left'] + row['width'], row['top'], row['left'] + row['width'], row['top'] + row['height'], row['left'], row['top'] + row['height']], axis=1)
+    df_bb = df_bb.drop(columns=['left', 'top', 'width', 'height', 'conf'])
+    df_bb = df_bb[['boundingBox', 'text']]
+    df_bb = df_bb.to_dict('records')
+    return df_bb
 
 def check_intersection(box1, box2):
     if (box1[2] - box1[0]) + ((box2[2] - box2[0])) > max(box2[2], box1[2]) - min(box2[0], box1[0]) \
