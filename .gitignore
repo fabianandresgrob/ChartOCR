@@ -9,6 +9,7 @@ results/
 .vscode
 *.zip
 CornerNet/
-data/
 *.so
 *.ipynb
+*.pkl
+data/coco/
