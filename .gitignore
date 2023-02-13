@@ -1,0 +1,13 @@
+results/
+
+*.swp
+
+*.pyc
+*.o*
+
+.DS_Store
+.vscode
+*.zip
+CornerNet/
+data/
+*.so
