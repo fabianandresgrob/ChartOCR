@@ -1,5 +1,5 @@
-# DeepRule
-Compete code of DeepRule
+# ChartOCR
+Copy from [original repo](https://github.com/soap117/DeepRule) with the corner layers rewritten in pure PyTorch.
 ## Getting Started
 Please first install [Anaconda](https://anaconda.org) and create an Anaconda environment using the provided package list.
 ```
@@ -11,16 +11,7 @@ After you create the environment, activate it.
 source activate DeepRule
 ```
 
-Our current implementation only supports GPU so you need a GPU and need to have CUDA installed on your machine.
-
-### Compiling Corner Pooling Layers
-You need to compile the C++ implementation of corner pooling layers. 
-Please check the latest CornerNet on github if you find problems.
-https://github.com/princeton-vl/CornerNet
-```
-cd <CornerNet dir>/models/py_utils/_cpools/
-python setup.py build_ext --inplace
-```
+Inference can be run without a GPU.
 
 ### Compiling NMS
 You also need to compile the NMS code (originally from [Faster R-CNN](https://github.com/rbgirshick/py-faster-rcnn/blob/master/lib/nms/cpu_nms.pyx) and [Soft-NMS](https://github.com/bharatsingh430/soft-nms/blob/master/lib/nms/cpu_nms.pyx)).
