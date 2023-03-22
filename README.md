@@ -1,14 +1,14 @@
 # ChartOCR
 Copy from [original repo](https://github.com/soap117/DeepRule) with the corner layers rewritten in pure PyTorch.
 ## Getting Started
-Please first install [Anaconda](https://anaconda.org) and create an Anaconda environment using the provided package list.
+Create an Anaconda environment using the provided package list.
 ```
- conda create  --name DeepRule --file DeepRule.txt
+ conda create  --name chartocr --file conda_packagelist.txt
 ```
 
 After you create the environment, activate it.
 ```
-source activate DeepRule
+source activate chartocr
 ```
 
 Inference can be run without a GPU.
@@ -84,11 +84,12 @@ e.g.
 python train_chart.py --cfg_file CornerNetBar --data_dir /home/data/bardata(1031)
 ```
 
-To use the trained model as a web server pipeline:
+## To use the trained model as a web server pipeline:
 ```
 python manage.py runserver 8800
 ```
 Access localhost:8800 to interact.
+This works very well and can be used to reference how the tool might be used for running inference only.
 
 If you want to test batch of data directly, here you have to pre-assign the type of charts.
 ```
